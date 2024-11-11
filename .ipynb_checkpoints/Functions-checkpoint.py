@@ -31,45 +31,41 @@ def Import_New(Path):
     return image_list
 
 
-def Get_Props(image_list): # MAYBE DEPRECIATED AND NEED DELETED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    """
-    Input: Dictionary containing Images in form of numpy arrays (located in the [1] element under a key)
-    Output: Results of SKimage 'regionsprops' run on image arrays stored in new element of dictionary under the same key as input
-    """
-    for i in range(len(image_list)):
-        image_array = image_list[i]['array']
-        labels = measure.label( image_array )
-        props = measure.regionprops(labels, image_array )
-        image_dict.update({i: (image_dict[i][0], image_array, props)})
-    return image_dict
+#def Get_Props(image_list): # MAYBE DEPRECIATED AND NEED DELETED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#    """
+#    Input: Dictionary containing Images in form of numpy arrays (located in the [1] element under a key)
+#    Output: Results of SKimage 'regionsprops' run on image arrays stored in new element of dictionary under the same key as #input
+#    """
+#    for i in range(len(image_list)):
+#        image_array = image_list[i]['array']
+#        labels = measure.label( image_array )
+#        props = measure.regionprops(labels, image_array )
+#        image_dict.update({i: (image_dict[i][0], image_array, props)})
+#    return image_dict
 
-def alignment_cent_calc( i ):
-    #for i in image_list:
+def alignment_cent_calc( i, ax ):
     labels = i['Objects']
     props = measure.regionprops(labels, i['Binary Image'])
-        # 'props' and 'labels'are of different shapes!!! - careful when handling
-        
+        # 'props' and 'labels'are of different shapes!!! - careful when handling  
     area = []
     for k in props:
         area.append(k.area)
     biggest_area = np.max(area)
-        
-        
+          
     orient = np.ones(len(props))
     centroid = np.ones((len(props),2))
     plt.figure(1)
-    print()
     for j in range(len(props)):
         if props[j].eccentricity > 0.7 and props[j].area <= biggest_area*0.95:
             orient[j] = props[j].orientation
             centroid[j][1], centroid[j][0] = props[j].centroid
-            plt.scatter(props[j].coords[:,1], props[j].coords[:,0], s=0.01, alpha=1)
+            ax[1].scatter(props[j].centroid[1], props[j].centroid[0], s=0.5, alpha=1, color='black')
         else:
             continue
     
-    ax = plt.gca()
-    ax.set_ylim(ax.get_ylim()[::-1])   
-    plt.imshow(i['Binary Image'], cmap='gray')
+    #ax = plt.gca()
+    #ax.set_ylim(ax.get_ylim()[::-1])   
+    #plt.imshow(i['Binary Image'], cmap='gray')
     plt.show()
     i.update({'Objects_ECC': labels, 'Centroid': centroid, 'Orientation': orient, 'Obj Number': len(props)})  
     return i
@@ -115,12 +111,10 @@ def Image_Proccess( binary_image_list, imaging, index):
             rgb_obj = color.label2rgb(accepted_objects, bg_label=0)
             ax[1].imshow(rgb_obj)
             ax[1].set_title('Watershed Segmentation; min_dist = '+str(min_dist)+' , footprint = (' +str(foot)+','+str(foot)+')')
-            plt.show()
+            #plt.show()
         
         binary_image_list[i].update({'Binary Image': binary_image, 'Objects': accepted_objects})
-        binary_image_list[i] = alignment_cent_calc( binary_image_list[i] )
-    
-    #binary_image_list = alignment_cent_calc( binary_image_list )
+        binary_image_list[i] = alignment_cent_calc( binary_image_list[i], ax )
     return  binary_image_list
 
 
